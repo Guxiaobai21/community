@@ -1,6 +1,8 @@
 package com.yingteng.community.service;
 
+import com.yingteng.community.dao.LoginTicketMapper;
 import com.yingteng.community.dao.UserMapper;
+import com.yingteng.community.entity.LoginTicket;
 import com.yingteng.community.entity.User;
 import com.yingteng.community.util.CommunityContant;
 import com.yingteng.community.util.CommunityUtil;
@@ -12,10 +14,7 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 @Service
 public class UserService implements CommunityContant {
@@ -29,6 +28,9 @@ public class UserService implements CommunityContant {
     @Autowired
     private TemplateEngine templateEngine;
 
+    @Autowired
+    private LoginTicketMapper loginTicketMapper;
+
     @Value("${community.path.domain}")
     private String domain;
 
@@ -39,6 +41,11 @@ public class UserService implements CommunityContant {
         return userMapper.selectById(userId);
     }
 
+    /**
+     * 注册
+     * @param user
+     * @return
+     */
     public Map<String, Object> register(User user) {
         Map<String, Object> map =new HashMap<>();
 
@@ -85,15 +92,16 @@ public class UserService implements CommunityContant {
         userMapper.insertUser(user);
 
         //激活邮件
+        //使用thymeleaf下的Context装载内容
         Context context = new Context();
         context.setVariable("email", user.getEmail());
-        //http://localhost:8080/community/activation/101/code
+        //URL格式示例：http://localhost:8080/community/activation/101/code
         String url = domain + contextPath +"/activation/" + user.getId() + "/" + user.getActivationCode();
         context.setVariable("url", url);
-        //通过template模板装载URL
+        //通过thymeleaf下的Template模板装载内容，然后转成字符串返回
         String content = templateEngine.process("/mail/activation", context);
+        //发送邮件,参数：邮箱、主题、内容
         mailClient.sendMail(user.getEmail(), "激活账号", content);
-
         return map;
     }
 
@@ -113,5 +121,63 @@ public class UserService implements CommunityContant {
         }else{
             return ACTIVATION_FAILURE;
         }
+    }
+
+    /**
+     * 登录
+     * @param username
+     * @param password
+     * @param expiredSeconds
+     * @return
+     */
+    public Map<String, Object> login(String username, String password, int expiredSeconds){
+        Map<String, Object> map = new HashMap<>();
+
+        //空值处理
+        if (StringUtils.isBlank(username)){
+            map.put("usernameMsg", "账号不能为空！");
+            return map;
+        }
+        if (StringUtils.isBlank(password)){
+            map.put("passwordMsg", "密码不能为空！");
+        }
+
+        //验证账号
+        User user = userMapper.selectByName(username);
+        if (user == null){
+            map.put("usernameMsg", "该账号不存在！");
+            return map;
+        }
+
+        //验证状态
+        if (user.getStatus() == 0){
+            map.put("usernameMsg", "该账号未激活！");
+            return map;
+        }
+
+        //验证密码
+        if (!user.getPassword().equals(CommunityUtil.md5(password + user.getSalt()))){
+            map.put("passwordMsg", "密码不正确！");
+            return map;
+        }
+        //生成登录凭证
+        LoginTicket loginTicket = new LoginTicket();
+        loginTicket.setUserId(user.getId());
+        loginTicket.setTicket(CommunityUtil.generateUUID());
+        loginTicket.setStatus(0);
+        loginTicket.setExpired(new Date(System.currentTimeMillis() + expiredSeconds * 1000));
+        loginTicketMapper.insertLoginTicket(loginTicket);
+
+        map.put("ticket", loginTicket.getTicket());
+        return map;
+    }
+
+
+    public void logout(String ticket) {
+            loginTicketMapper.updateStatus(ticket, 1);
+    }
+
+    public LoginTicket findLoginTicket(String ticket) {
+        return loginTicketMapper.selectByTicket(ticket);
     }
 }
