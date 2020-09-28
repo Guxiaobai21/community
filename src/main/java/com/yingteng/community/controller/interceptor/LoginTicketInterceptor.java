@@ -31,7 +31,6 @@ public class LoginTicketInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        logger.debug("preHandle: " + handler);
         //从cookie中获取凭证
         String ticket = CookieUtil.getValue(request, "ticket");
         //验证ticket
@@ -51,7 +50,6 @@ public class LoginTicketInterceptor implements HandlerInterceptor {
 
     @Override
     public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
-        logger.debug("postHandle: " + handler);
         User user =  hostHolder.getUser();
         if(user != null && modelAndView != null){
             modelAndView.addObject("loginUser", user);
@@ -60,7 +58,6 @@ public class LoginTicketInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
-        logger.debug("afterCompletion: " + handler);
         hostHolder.clear();
     }
 }

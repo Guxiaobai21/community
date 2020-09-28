@@ -153,7 +153,7 @@ public class LoginController implements CommunityContant {
         //将验证码存入session
         session.setAttribute("kaptcha", text);
 
-        //将突破输出给浏览器
+        //将图片输出给浏览器
         response.setContentType("image/png");
         try {
             OutputStream os = response.getOutputStream();
