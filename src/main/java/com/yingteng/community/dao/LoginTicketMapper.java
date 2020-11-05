@@ -21,6 +21,12 @@ public interface LoginTicketMapper {
     })
     LoginTicket selectByTicket(String ticket);
 
+    @Select({
+            "select id,user_id,ticket,status,expired ",
+            "from login_ticket where user_id=#{userId}"
+    })
+    LoginTicket selectById(int userId);
+
     @Update({
             "<script>",
             "update login_ticket set status=#{status} where ticket=#{ticket}",

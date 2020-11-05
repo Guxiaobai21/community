@@ -6,6 +6,7 @@ import com.yingteng.community.dao.UserMapper;
 import com.yingteng.community.entity.DiscussPost;
 import com.yingteng.community.entity.LoginTicket;
 import com.yingteng.community.entity.User;
+import com.yingteng.community.util.CommunityUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,6 +14,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @SpringBootTest
 @ContextConfiguration(classes = CommunityApplication.class)
@@ -95,4 +97,11 @@ public class MapperTest {
 
         loginTicketMapper.updateStatus("abc", 1);
     }
+
+    @Test
+    public void testMd5Password(){
+        String password = CommunityUtil.md5("1231231238c824");
+        System.out.println(password);
+    }
+
 }

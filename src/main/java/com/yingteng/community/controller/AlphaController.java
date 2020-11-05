@@ -181,7 +181,8 @@ public class AlphaController {
         session.setAttribute("name", "test");
         return "set session";
     }
-    //session 示例 响应
+
+    //session示例 响应
     @RequestMapping(path = "/session/get", method =  RequestMethod.GET)
     @ResponseBody
     public String getSession(HttpSession session) {
@@ -190,7 +191,14 @@ public class AlphaController {
         return "get session";
     }
 
-
+    //ajax示例
+    @RequestMapping(path = "/ajax", method = RequestMethod.POST)
+    @ResponseBody
+    public String testAjax(String name, int age){
+        System.out.println(name);
+        System.out.println(age);
+        return CommunityUtil.getJSONString(0, "操作成功！");
+    }
 
 
 }

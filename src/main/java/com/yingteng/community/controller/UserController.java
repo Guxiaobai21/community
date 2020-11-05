@@ -1,6 +1,6 @@
 package com.yingteng.community.controller;
 
-import com.sun.deploy.net.HttpResponse;
+import com.yingteng.community.annotation.LoginRequired;
 import com.yingteng.community.entity.User;
 import com.yingteng.community.service.UserService;
 import com.yingteng.community.util.CommunityUtil;
@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -22,6 +23,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 @Controller
@@ -46,12 +49,14 @@ public class UserController {
     private HostHolder hostHolder;
 
 
+    @LoginRequired
     @RequestMapping(path = "/setting", method = RequestMethod.GET)
     public String getSettingPage() {
         return "/site/setting";
     }
 
     //上传文件
+    @LoginRequired
     @RequestMapping(path = "/upload", method = RequestMethod.POST)
     public String uploadHeader(MultipartFile headerImage, Model model){
         if (headerImage == null){
@@ -86,7 +91,7 @@ public class UserController {
         //http://localhost:8080/community/user/header/xxx.png
         User user = hostHolder.getUser();
         String headerUrl = domain + contextPath + "/user/header/" + fileName;
-        userService.upddateHeader(user.getId(), headerUrl);
+        userService.updateHeader(user.getId(), headerUrl);
 
         return "redirect:/index";
 
@@ -113,6 +118,19 @@ public class UserController {
             logger.error("读取头像失败：" + e.getMessage());
         }
 
+    }
+
+    @LoginRequired
+    @RequestMapping(path = "/updatePassword", method = RequestMethod.POST)
+    public String updatePassword(@CookieValue String ticket, Model model, String oldPassword, String newPassword, String confirmPassword) {
+        Map<String, Object> map = userService.updatePassword(oldPassword, newPassword, confirmPassword, ticket);
+        if (map != null){
+            model.addAttribute("oldPasswordMsg", map.get("oldPasswordMsg"));
+            model.addAttribute("newPasswordMsg", map.get("newPasswordMsg"));
+            model.addAttribute("confirmPasswordMsg", map.get("confirmPasswordMsg"));
+            return "/site/setting";
+        }
+        return "redirect:/login";//重定向失败，未修复BUG！
     }
 
 }

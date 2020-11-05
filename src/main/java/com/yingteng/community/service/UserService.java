@@ -6,6 +6,7 @@ import com.yingteng.community.entity.LoginTicket;
 import com.yingteng.community.entity.User;
 import com.yingteng.community.util.CommunityContant;
 import com.yingteng.community.util.CommunityUtil;
+import com.yingteng.community.util.HostHolder;
 import com.yingteng.community.util.MailClient;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,9 @@ public class UserService implements CommunityContant {
 
     @Autowired
     private LoginTicketMapper loginTicketMapper;
+
+    @Autowired
+    private HostHolder hostHolder;
 
     @Value("${community.path.domain}")
     private String domain;
@@ -181,7 +185,37 @@ public class UserService implements CommunityContant {
         return loginTicketMapper.selectByTicket(ticket);
     }
 
-    public int upddateHeader(int userId, String headerUrl) {
+    public int updateHeader(int userId, String headerUrl) {
         return userMapper.updateHeader(userId, headerUrl);
     }
+
+    public Map<String, Object> updatePassword (String oldPassword, String newPassword, String confirmPassword, String ticket){
+        HashMap<String, Object> map = new HashMap<>();
+        //参数校验
+        if (StringUtils.isBlank(oldPassword)){
+            map.put("oldPasswordMsg", "密码不能为空！");
+            return map;
+        }
+        if (StringUtils.isBlank(newPassword)){
+            map.put("newPasswordMsg", "新密码不能为空！");
+            return map;
+        }
+        if (!newPassword.equals(confirmPassword)){
+            map.put("confirmPasswordMsg", "确认密码不一致！");
+            return map;
+        }
+        //账号验证
+        User user = hostHolder.getUser();
+        if (!user.getPassword().equals(CommunityUtil.md5(oldPassword + user.getSalt()))){
+            map.put("oldPasswordMsg", "密码不正确！");
+            return map;
+        }
+        //更新密码
+        userMapper.updatePassword(user.getId(), CommunityUtil.md5(newPassword + user.getSalt()));
+        //更改用户凭证状态
+        loginTicketMapper.updateStatus(ticket,1);
+        hostHolder.clear();
+        return map;
+    }
+
 }

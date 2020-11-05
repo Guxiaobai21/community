@@ -1,5 +1,6 @@
 package com.yingteng.community.util;
 
+import com.yingteng.community.dao.AlphaDao;
 import com.yingteng.community.entity.User;
 import org.springframework.stereotype.Component;
 
