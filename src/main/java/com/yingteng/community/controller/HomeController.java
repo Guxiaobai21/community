@@ -4,7 +4,9 @@ import com.yingteng.community.entity.DiscussPost;
 import com.yingteng.community.entity.Page;
 import com.yingteng.community.entity.User;
 import com.yingteng.community.service.DiscussPostService;
+import com.yingteng.community.service.LikeService;
 import com.yingteng.community.service.UserService;
+import com.yingteng.community.util.CommunityContant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,18 +20,20 @@ import java.util.List;
 import java.util.Map;
 
 @Controller
-public class HomeController {
+public class HomeController implements CommunityContant {
 
     @Autowired
     private DiscussPostService discussPostService;
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private LikeService likeService;
 
     @RequestMapping(path = "/index", method = RequestMethod.GET)
     public String getIndexPage(Model model, Page page) {
         //方法调用前，SpringMVC会自动实例化Model和Page，并将Page注入Model。
-        //所以，在thymeleaf中科院直接访问Page对象中的数据。
+        //所以，在thymeleaf中直接访问Page对象中的数据。
         page.setRows(discussPostService.findDiscussPostRows(0));//每次传入总行数，用于计算总页数（前端需要）
         page.setPath("/index");
         List<DiscussPost> list = discussPostService.findDiscussPosts(0, page.getOffset(), page.getLimit());
@@ -40,10 +44,18 @@ public class HomeController {
                 map.put("post", post);
                 User user = userService.findUserById(post.getUserId());
                 map.put("user", user);
+
+                long likeCount = likeService.findEntityLikeCount( ENTITY_TYPE_POST, post.getId());
+                map.put("likeCount", likeCount);
                 discussPosts.add(map);
             }
         }
         model.addAttribute("discussPosts", discussPosts);
         return "/index";
+    }
+
+    @RequestMapping(path = "/error", method = RequestMethod.GET)
+    public String getErrorPage() {
+        return "/error/500";
     }
 }

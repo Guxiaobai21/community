@@ -2,9 +2,11 @@ package com.yingteng.community;
 
 import com.yingteng.community.dao.DiscussPostMapper;
 import com.yingteng.community.dao.LoginTicketMapper;
+import com.yingteng.community.dao.MessageMapper;
 import com.yingteng.community.dao.UserMapper;
 import com.yingteng.community.entity.DiscussPost;
 import com.yingteng.community.entity.LoginTicket;
+import com.yingteng.community.entity.Message;
 import com.yingteng.community.entity.User;
 import com.yingteng.community.util.CommunityUtil;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,9 @@ public class MapperTest {
 
     @Autowired
     private LoginTicketMapper loginTicketMapper;
+
+    @Autowired
+    private MessageMapper messageMapper;
 
     @Test
     public void testSelectUser(){
@@ -102,6 +107,28 @@ public class MapperTest {
     public void testMd5Password(){
         String password = CommunityUtil.md5("1231231238c824");
         System.out.println(password);
+    }
+
+    @Test
+    public void testSelectLetters(){
+        List<Message> list = messageMapper.selectConvcersations(111, 0, 20);
+        for (Message message: list){
+            System.out.println(message);
+        }
+
+       int count = messageMapper.selectConversationCount(111);
+        System.out.println(count);
+
+        list = messageMapper.selectLetters("111_112", 0, 10);
+        for (Message message: list){
+            System.out.println(message);
+        }
+
+        count = messageMapper.selectLetterCount("111_112");
+        System.out.println(count);
+
+        count = messageMapper.selectLetterUnreadCount(131,"111_131");
+        System.out.println(count);
     }
 
 }

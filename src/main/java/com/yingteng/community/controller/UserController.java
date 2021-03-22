@@ -2,6 +2,7 @@ package com.yingteng.community.controller;
 
 import com.yingteng.community.annotation.LoginRequired;
 import com.yingteng.community.entity.User;
+import com.yingteng.community.service.LikeService;
 import com.yingteng.community.service.UserService;
 import com.yingteng.community.util.CommunityUtil;
 import com.yingteng.community.util.HostHolder;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -47,6 +49,9 @@ public class UserController {
 
     @Autowired
     private HostHolder hostHolder;
+
+    @Autowired
+    private LikeService likeService;
 
 
     @LoginRequired
@@ -131,6 +136,18 @@ public class UserController {
             return "/site/setting";
         }
         return "redirect:/login";//重定向失败，未修复BUG！
+    }
+
+    @RequestMapping(path = "/profile/{userId}", method = RequestMethod.GET)
+    public String getProfilePage(@PathVariable("userId") int userId, Model model){
+        User user = userService.findUserById(userId);
+        if (user == null){
+            throw new RuntimeException("该用户不存在！");
+        }
+        model.addAttribute("user", user);
+        int likeCount = likeService.findUserLikeCount(userId);
+        model.addAttribute("likeCount", likeCount);
+        return "/site/profile";
     }
 
 }
