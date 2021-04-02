@@ -25,7 +25,7 @@ public class RedisTest {
      * 字符串类型 ： key-value
      */
     @Test
-    public void testStrings(){
+    public void testStrings() {
         String redisKey = "test:string";
 
         redisTemplate.opsForValue().set(redisKey, 1);
@@ -40,7 +40,7 @@ public class RedisTest {
      * Hash类型 ： hashKey下有多个key-value
      */
     @Test
-    public void testHash(){
+    public void testHash() {
         String redisKey = "test:hash";
 
         redisTemplate.opsForHash().put(redisKey, "id", 1);
@@ -57,7 +57,7 @@ public class RedisTest {
      * 列表类型 : 一个key下多个值， 可支持队列和栈的数据结构
      */
     @Test
-    public void testList(){
+    public void testList() {
         String redisKey = "test:list";
 
         redisTemplate.opsForList().leftPush(redisKey, 101);
@@ -84,7 +84,7 @@ public class RedisTest {
      * 集合（set）类型： 一个key下多个值，支持随机弹出，元素唯一
      */
     @Test
-    public void testSet(){
+    public void testSet() {
         String redisKey = "test:set";
 
         // 可存一个或多个
@@ -99,7 +99,7 @@ public class RedisTest {
     }
 
     @Test
-    public void testSortedSet(){
+    public void testSortedSet() {
         String redisKey = "test:sortedSet";
 
         // 键-值-分数
@@ -123,7 +123,7 @@ public class RedisTest {
     }
 
     @Test
-    public void testKey(){
+    public void testKey() {
 
         // 删除指定key
         redisTemplate.delete("test:string");
@@ -138,7 +138,7 @@ public class RedisTest {
     }
 
     @Test
-    public void BoundOperation(){
+    public void BoundOperation() {
         String redisKey = "test:boundOperation";
 
         BoundValueOperations operations = redisTemplate.boundValueOps(redisKey);
@@ -153,16 +153,16 @@ public class RedisTest {
     }
 
     @Test
-    public void testTransational(){
+    public void testTransational() {
         Object obj = redisTemplate.execute(new SessionCallback() {
             @Override
             public Object execute(RedisOperations redisOperations) throws DataAccessException {
                 String redisKey = "test:transation";
                 // 开启事务
                 redisOperations.multi();
-                redisOperations.opsForSet().add(redisKey,"亚索");
-                redisOperations.opsForSet().add(redisKey,"薇恩");
-                redisOperations.opsForSet().add(redisKey,"剑姬");
+                redisOperations.opsForSet().add(redisKey, "亚索");
+                redisOperations.opsForSet().add(redisKey, "薇恩");
+                redisOperations.opsForSet().add(redisKey, "剑姬");
 
                 // 此时的查询是无效的，因为在事务中还未提交，上面的add操作还未执行
                 System.out.println(redisOperations.opsForSet().members(redisKey));
@@ -173,7 +173,7 @@ public class RedisTest {
     }
 
     @Test
-    public void testZset(){
+    public void testZset() {
         String rankWeekKey = "rank:2021-3-8:2021-3-14";
 
 //        map.forEach((key,value) ->{
@@ -195,7 +195,7 @@ public class RedisTest {
     }
 
     @Test
-    public void testHashMap(){
+    public void testHashMap() {
         String hashKey = "fake";
         String itemKey = "item";
 //        Map<String, Object> hashmap = new HashMap<>();
@@ -214,7 +214,6 @@ public class RedisTest {
         System.out.println(isMember);
 
 
-
         redisTemplate.execute(new SessionCallback() {
             @Override
             public Object execute(RedisOperations operations) throws DataAccessException {
@@ -230,7 +229,7 @@ public class RedisTest {
     }
 
     @Test
-    public void testGetWeek(){
+    public void testGetWeek() {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");//设置日期格式
         Calendar cld = Calendar.getInstance(Locale.CHINA);
         cld.setFirstDayOfWeek(Calendar.MONDAY);//以周一为首日
@@ -242,6 +241,4 @@ public class RedisTest {
         cld.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);//周日
         System.out.println(df.format(cld.getTime()));
     }
-
-
 }

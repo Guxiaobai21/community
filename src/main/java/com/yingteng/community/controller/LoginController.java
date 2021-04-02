@@ -5,18 +5,22 @@ import com.yingteng.community.dao.UserMapper;
 import com.yingteng.community.entity.User;
 import com.yingteng.community.service.UserService;
 import com.yingteng.community.util.CommunityContant;
+import com.yingteng.community.util.CommunityUtil;
+import com.yingteng.community.util.RedisKeyUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.thymeleaf.util.DateUtils;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.Cookie;
@@ -28,6 +32,7 @@ import java.io.OutputStream;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Controller
 public class LoginController implements CommunityContant {
@@ -40,6 +45,9 @@ public class LoginController implements CommunityContant {
 
     @Value("${server.servlet.context-path}")
     private String contextPath;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     private static final Logger logger = LoggerFactory.getLogger(LoginController.class);
 
@@ -64,9 +72,16 @@ public class LoginController implements CommunityContant {
     //检查验证码
     @RequestMapping(path = "/login", method = RequestMethod.POST)
     public String login(String username, String password, String code, boolean rememberme,
-                        Model model, HttpSession session, HttpServletResponse response){
+                        Model model, /*HttpSession session*/ @CookieValue("kaptchaOwner") String kaptchaOwner, HttpServletResponse response){
         //检查验证码
-        String kaptcha = (String) session.getAttribute("kaptcha");
+//        String kaptcha = (String) session.getAttribute("kaptcha");
+
+        String kaptcha = null;
+        if (StringUtils.isNoneBlank(kaptchaOwner)){
+            String redisKey = RedisKeyUtil.getKaptchKey(kaptchaOwner);
+            kaptcha = (String) redisTemplate.opsForValue().get(redisKey);
+        }
+
         if (StringUtils.isBlank(kaptcha) || StringUtils.isBlank(code) || !kaptcha.equalsIgnoreCase(code)){
             model.addAttribute("codeMsg", "验证码不正确！");
             return  "/site/login";
@@ -91,6 +106,7 @@ public class LoginController implements CommunityContant {
     @RequestMapping(path = "/logout", method = RequestMethod.GET)
     public String logout(@CookieValue("ticket") String ticket) {
         userService.logout(ticket);
+
         return "redirect:/login";
     }
 
@@ -151,7 +167,17 @@ public class LoginController implements CommunityContant {
         BufferedImage image =  kaptchaProducer.createImage(text);
 
         //将验证码存入session
-        session.setAttribute("kaptcha", text);
+//        session.setAttribute("kaptcha", text);
+
+        // 验证码凭证存cookie
+        String kaptchaOwner = CommunityUtil.generateUUID();
+        String kaptchaKey = RedisKeyUtil.getKaptchKey(kaptchaOwner);
+        Cookie cookie = new Cookie("kaptchaOwner", kaptchaOwner);
+        cookie.setPath(contextPath);
+        cookie.setMaxAge(60);
+        response.addCookie(cookie);
+        // 将验证码存入Redis
+        redisTemplate.opsForValue().set(kaptchaKey, text, 60, TimeUnit.SECONDS);
 
         //将图片输出给浏览器
         response.setContentType("image/png");

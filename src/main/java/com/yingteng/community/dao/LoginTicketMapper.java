@@ -4,6 +4,7 @@ import com.yingteng.community.entity.LoginTicket;
 import org.apache.ibatis.annotations.*;
 
 @Mapper
+@Deprecated
 public interface LoginTicketMapper {
 
     //通过注解编写SQL语句。
