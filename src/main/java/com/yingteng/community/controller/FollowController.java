@@ -1,5 +1,7 @@
 package com.yingteng.community.controller;
 
+import com.yingteng.community.Event.EventProducer;
+import com.yingteng.community.entity.Event;
 import com.yingteng.community.entity.Page;
 import com.yingteng.community.entity.User;
 import com.yingteng.community.service.FollowService;
@@ -26,18 +28,27 @@ public class FollowController implements CommunityContant {
 
     @Autowired
     private FollowService followService;
-
     @Autowired
     private HostHolder hostHolder;
-
     @Autowired
     private UserService userService;
+    @Autowired
+    private EventProducer eventProducer;
 
     @RequestMapping(path = "/follow", method = RequestMethod.POST)
     @ResponseBody
     public String follow(int entityType, int entityId){
         User user = hostHolder.getUser();
         followService.follow(user.getId(), entityType, entityId);
+
+        // 触发关注事件
+        Event event = new Event();
+        event.setTopic(TOPIC_FOLLOW)
+                .setUserId(hostHolder.getUser().getId())
+                .setEntityType(entityType)
+                .setEntityId(entityId)
+                .setEntityUserId(entityId);
+        eventProducer.fireEvent(event);
 
         return CommunityUtil.getJSONString(0, "已关注！");
     }
